@@ -2,58 +2,43 @@ import requests
 import os
 
 def main():
-    print("🚀 启动抓取...")
-    gist_id = "4a5958c12564fabe91effe236e4c103c"
-    # 使用原始数据下载链接，绕过复杂的 API 限制
-    url = f"https://api.github.com/gists/{gist_id}"
+    print("🚀 强力抓取模式启动...")
     
-    # 强制更新日志
-    with open("RUN_LOG.txt", "w") as f:
-        f.write("Last Run: " + str(os.popen('date').read()))
+    # 你的目标 Gist 地址对应的原始数据基础 URL
+    base_url = "https://gist.githubusercontent.com/smile6-6/4a5958c12564fabe91effe236e4c103c/raw/"
+    
+    # 强制更新时间戳，证明脚本在跑
+    with open("RUN_LOG.txt", "w", encoding="utf-8") as f:
+        f.write(f"Last Attempt: {os.popen('date').read()}")
 
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0',
-            'Accept': 'application/vnd.github.v3+json'
-        }
-        resp = requests.get(url, headers=headers, timeout=30)
-        print(f"📡 状态码: {resp.status_code}")
-        
-        if resp.status_code != 200:
-            print(f"❌ 访问失败。原因: {resp.text}")
-            return
+    # 定义我们要强抓的文件名列表（来自你提供的 Gist）
+    target_files = [
+        "健康中心618pro",
+        "干杯1",
+        "干杯6",
+        "干杯12"
+    ]
+
+    success_count = 0
+    for name in target_files:
+        try:
+            # 拼接原始文件的下载链接
+            file_url = f"{base_url}{name}"
+            print(f"📡 正在强抓: {name}...")
             
-        files = resp.json().get('files', {})
-        if not files:
-            print("❌ 警告：该 Gist 中没有发现任何文件内容！")
-            return
+            resp = requests.get(file_url, timeout=20)
+            if resp.status_code == 200 and len(resp.text) > 10:
+                # 写入明文文件
+                with open(f"{name}.txt", "w", encoding="utf-8") as f:
+                    f.write(resp.text)
+                print(f"✅ 成功生成: {name}.txt")
+                success_count += 1
+            else:
+                print(f"❌ 抓取失败或内容过短: {name}")
+        except Exception as e:
+            print(f"💥 抓取 {name} 出错: {e}")
 
-        print(f"📁 准备处理 {len(files)} 个内容块")
-
-        file_count = 0
-        for filename, info in files.items():
-            content = info.get('content', '')
-            # 即使内容为空，我们也生成一个文件看看
-            if not content:
-                print(f"⚠️ 文件 {filename} 内容为空，正在尝试获取 raw_url...")
-                raw_url = info.get('raw_url')
-                if raw_url:
-                    content = requests.get(raw_url).text
-
-            if content:
-                safe_name = filename.replace(" ", "_").replace("/", "-")
-                if not safe_name.endswith(".txt"):
-                    safe_name += ".txt"
-                
-                with open(safe_name, "w", encoding="utf-8") as f:
-                    f.write(content)
-                print(f"✅ 成功写入: {safe_name}")
-                file_count += 1
-        
-        print(f"🎉 任务结束，本次实际生成文件数: {file_count}")
-
-    except Exception as e:
-        print(f"💥 异常: {str(e)}")
+    print(f"🏁 任务结束，共抓取到 {success_count} 个节点文件。")
 
 if __name__ == "__main__":
     main()
