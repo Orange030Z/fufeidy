@@ -2,50 +2,58 @@ import requests
 import os
 
 def main():
-    print("🚀 强制抓取流程启动...")
-    
-    # 目标 Gist 地址
+    print("🚀 启动抓取...")
     gist_id = "4a5958c12564fabe91effe236e4c103c"
+    # 使用原始数据下载链接，绕过复杂的 API 限制
     url = f"https://api.github.com/gists/{gist_id}"
     
-    # 强制创建一个标记文件，证明脚本运行了
+    # 强制更新日志
     with open("RUN_LOG.txt", "w") as f:
         f.write("Last Run: " + str(os.popen('date').read()))
 
     try:
-        # 使用特定的 User-Agent 模拟浏览器请求，防止被 GitHub 拦截
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        headers = {
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'application/vnd.github.v3+json'
+        }
         resp = requests.get(url, headers=headers, timeout=30)
-        print(f"📡 接口响应码: {resp.status_code}")
+        print(f"📡 状态码: {resp.status_code}")
         
         if resp.status_code != 200:
-            print(f"❌ 无法读取 Gist 数据，错误代码: {resp.status_code}")
+            print(f"❌ 访问失败。原因: {resp.text}")
             return
             
         files = resp.json().get('files', {})
         if not files:
-            print("❌ Gist 内没有发现任何文件块")
+            print("❌ 警告：该 Gist 中没有发现任何文件内容！")
             return
 
-        print(f"📁 准备处理 {len(files)} 个文件块")
+        print(f"📁 准备处理 {len(files)} 个内容块")
 
+        file_count = 0
         for filename, info in files.items():
             content = info.get('content', '')
+            # 即使内容为空，我们也生成一个文件看看
+            if not content:
+                print(f"⚠️ 文件 {filename} 内容为空，正在尝试获取 raw_url...")
+                raw_url = info.get('raw_url')
+                if raw_url:
+                    content = requests.get(raw_url).text
+
             if content:
-                # 强行处理文件名：去掉空格和特殊字符
-                clean_name = filename.replace(" ", "_").replace("/", "-")
-                if not clean_name.endswith(".txt"):
-                    clean_name += ".txt"
+                safe_name = filename.replace(" ", "_").replace("/", "-")
+                if not safe_name.endswith(".txt"):
+                    safe_name += ".txt"
                 
-                # 写入明文
-                with open(clean_name, "w", encoding="utf-8") as f:
+                with open(safe_name, "w", encoding="utf-8") as f:
                     f.write(content)
-                print(f"✅ 已强制写入本地文件: {clean_name}")
-            else:
-                print(f"⏩ 跳过空内容块: {filename}")
+                print(f"✅ 成功写入: {safe_name}")
+                file_count += 1
+        
+        print(f"🎉 任务结束，本次实际生成文件数: {file_count}")
 
     except Exception as e:
-        print(f"💥 发生严重错误: {str(e)}")
+        print(f"💥 异常: {str(e)}")
 
 if __name__ == "__main__":
     main()
