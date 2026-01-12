@@ -14,7 +14,7 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 获取完整历史以确保能成功同步
+          fetch-depth: 0
 
       - name: 设置 Python
         uses: actions/setup-python@v5
@@ -32,14 +32,14 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           
-          # 1. 强制拉取远程最新内容，防止冲突
+          # 1. 先把远程最新的代码拉下来合并，解决 rejected 报错
           git pull --rebase origin main
           
-          # 2. 添加生成的 txt 文件
+          # 2. 确保抓取到的 txt 文件被加入
           git add *.txt
           
           # 3. 即使内容没变也强制提交
           git commit --allow-empty -m "Update Nodes: $(date)"
           
-          # 4. 推送
+          # 4. 强制推送
           git push origin main
