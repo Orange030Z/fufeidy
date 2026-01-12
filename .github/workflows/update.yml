@@ -1,9 +1,9 @@
 name: Gist Node Auto Sync
 
 on:
+  workflow_dispatch: 
   schedule:
     - cron: '0 */6 * * *'
-  workflow_dispatch: 
 
 jobs:
   run_sync:
@@ -11,31 +11,25 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout Code
+      - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 安装 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install Dependencies
+      - name: 安装请求库
         run: pip install requests
 
-      - name: Execute Script
+      - name: 强制执行脚本
         run: python main.py
 
-      - name: Commit and Push
+      - name: 强制同步到仓库
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
-          
-          # 检查是否有 txt 文件生成
-          if ls *.txt 1> /dev/null 2>&1; then
-            git add *.txt
-            git commit -m "Update nodes: $(date)" || echo "Nothing to commit"
-            git push origin main
-          else
-            echo "❌ 错误：未发现任何生成的 .txt 文件！"
-            exit 1
-          fi
+          git add *.txt
+          # 即使内容没变也强制创建一个新的 commit
+          git commit --allow-empty -m "Force Sync: $(date)"
+          git push origin main
