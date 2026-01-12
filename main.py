@@ -2,39 +2,43 @@ import requests
 import os
 
 def main():
-    print("🚀 脚本启动：准备抓取 Gist 数据...")
+    print("🚀 启动强制抓取程序...")
     gist_id = "4a5958c12564fabe91effe236e4c103c"
     url = f"https://api.github.com/gists/{gist_id}"
     
+    # 强制创建一个测试文件，证明脚本有写权限
+    with open("test_connection.txt", "w") as f:
+        f.write("Connection Success")
+
     try:
+        print(f"📡 正在连接 Gist: {gist_id}")
         resp = requests.get(url, timeout=15)
-        print(f"📡 API 响应状态码: {resp.status_code}")
         
         if resp.status_code != 200:
-            print("❌ 无法连接到 GitHub API")
+            print(f"❌ 访问失败，状态码: {resp.status_code}")
             return
             
         files = resp.json().get('files', {})
-        print(f"📁 发现 {len(files)} 个文件块")
+        print(f"📁 成功获取到 {len(files)} 个文件块")
 
         for filename, info in files.items():
             content = info.get('content', '')
-            if not content:
-                print(f"⏩ 跳过空文件: {filename}")
-                continue
-            
-            # 格式化文件名：去掉空格，确保合法
-            safe_filename = filename.replace(" ", "_").replace("/", "-")
-            if not safe_filename.endswith(".txt"):
-                safe_filename += ".txt"
-            
-            # 强制写入明文内容
-            with open(safe_filename, "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"✅ 成功写入文件: {safe_filename} (大小: {len(content)} 字符)")
-            
-    except Exception as e:
-        print(f"💥 运行发生异常: {str(e)}")
+            if content:
+                # 强制格式化文件名
+                safe_name = filename.replace(" ", "_").replace("/", "-")
+                if not safe_name.endswith(".txt"):
+                    safe_name += ".txt"
+                
+                # 执行明文写入
+                with open(safe_name, "w", encoding="utf-8") as f:
+                    f.write(content)
+                print(f"✅ 强制生成: {safe_name} ({len(content)} 字符)")
+        
+        print("🎉 所有文件处理完毕！")
 
+    except Exception as e:
+        print(f"💥 运行崩溃: {str(e)}")
+
+# 必须保留这两行，否则脚本永远不会执行
 if __name__ == "__main__":
     main()
