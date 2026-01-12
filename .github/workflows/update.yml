@@ -2,14 +2,14 @@ name: Gist Node Auto Sync
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # 每6小时运行一次
-  workflow_dispatch:      # 允许手动运行
+    - cron: '0 */6 * * *' # 每 6 小时自动运行
+  workflow_dispatch:      # 允许手动触发运行
 
 jobs:
   run_sync:
     runs-on: ubuntu-latest
     permissions:
-      contents: write     # 必须开启写入权限
+      contents: write     # 确保有写入权限
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -30,11 +30,15 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # 只有当目录下有新的 .txt 文件生成时才执行提交
-          if ls *.txt 1> /dev/null 2>&1; then
-            git add *.txt
-            git commit -m "Auto Update: $(date)"
-            git push
+          # 1. 将所有生成的 txt 文件加入暂存区
+          git add *.txt
+          
+          # 2. 检查是否有文件发生了实质性的内容变化
+          # git diff --cached --quiet 会在没有改动时返回 0（真）
+          if git diff --cached --quiet; then
+            echo "✅ 节点内容与仓库现有内容一致，无需更新。"
           else
-            echo "没有发现生成的订阅文件，跳过提交。"
+            echo "🚀 检测到节点更新，正在提交..."
+            git commit -m "Auto Update: $(date +'%Y-%m-%d %H:%M:%S')"
+            git push
           fi
