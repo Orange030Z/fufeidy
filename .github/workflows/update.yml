@@ -30,11 +30,12 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           
-          # 添加所有 txt 文件
-          git add *.txt
-          
-          # 提交更改
-          git commit -m "Update nodes plain text: $(date)" || echo "No changes to commit"
-          
-          # 推送
-          git push origin main
+          # 检查是否有 txt 文件生成
+          if ls *.txt 1> /dev/null 2>&1; then
+            git add *.txt
+            git commit -m "Update nodes: $(date)" || echo "Nothing to commit"
+            git push origin main
+          else
+            echo "❌ 错误：未发现任何生成的 .txt 文件！"
+            exit 1
+          fi
