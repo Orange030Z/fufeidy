@@ -24,24 +24,21 @@ jobs:
       - name: 安装依赖
         run: pip install requests
 
-      - name: 强制清理环境并抓取
+      - name: 暴力重置与同步
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           
-          # 1. 强行重置本地分支，清除所有冲突残留
+          # 1. 强制重置，清理之前所有干扰和打岔
           git fetch origin main
           git reset --hard origin/main
           
-          # 2. 运行脚本生成节点文件
+          # 2. 运行脚本生成英文命名的文件
           python main.py
           
-          # 3. 检查是否有文件生成（用于日志排查）
-          ls -R
+          # 3. 强制添加当前目录下所有内容
+          git add -A
           
-          # 4. 强制添加所有新文件并提交
-          git add .
-          git commit --allow-empty -m "Master Force Update: $(date)"
-          
-          # 5. 暴力推送，覆盖远程仓库
+          # 4. 提交并强制推送覆盖，不解释直接冲
+          git commit --allow-empty -m "Master Sync Nodes: $(date)"
           git push --force origin main
