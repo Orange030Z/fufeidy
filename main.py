@@ -2,43 +2,34 @@ import requests
 import os
 
 def main():
-    print("🚀 强力抓取模式启动...")
+    print("🚀 正在执行暴力抓取...")
     
-    # 你的目标 Gist 地址对应的原始数据基础 URL
+    # 强制写入日志
+    with open("log.txt", "w") as f:
+        f.write(f"Run at: {os.popen('date').read()}")
+
+    # 目标链接字典：[文件名, Gist内的原始文件名]
+    targets = {
+        "nodes_health.txt": "健康中心618pro",
+        "nodes_cheers1.txt": "干杯1",
+        "nodes_cheers6.txt": "干杯6",
+        "nodes_cheers12.txt": "干杯12"
+    }
+
     base_url = "https://gist.githubusercontent.com/smile6-6/4a5958c12564fabe91effe236e4c103c/raw/"
-    
-    # 强制更新时间戳，证明脚本在跑
-    with open("RUN_LOG.txt", "w", encoding="utf-8") as f:
-        f.write(f"Last Attempt: {os.popen('date').read()}")
 
-    # 定义我们要强抓的文件名列表（来自你提供的 Gist）
-    target_files = [
-        "健康中心618pro",
-        "干杯1",
-        "干杯6",
-        "干杯12"
-    ]
-
-    success_count = 0
-    for name in target_files:
+    for local_name, remote_name in targets.items():
         try:
-            # 拼接原始文件的下载链接
-            file_url = f"{base_url}{name}"
-            print(f"📡 正在强抓: {name}...")
-            
-            resp = requests.get(file_url, timeout=20)
-            if resp.status_code == 200 and len(resp.text) > 10:
-                # 写入明文文件
-                with open(f"{name}.txt", "w", encoding="utf-8") as f:
-                    f.write(resp.text)
-                print(f"✅ 成功生成: {name}.txt")
-                success_count += 1
+            url = f"{base_url}{remote_name}"
+            r = requests.get(url, timeout=15)
+            if r.status_code == 200 and len(r.text) > 10:
+                with open(local_name, "w", encoding="utf-8") as f:
+                    f.write(r.text)
+                print(f"✅ 写入成功: {local_name}")
             else:
-                print(f"❌ 抓取失败或内容过短: {name}")
+                print(f"❌ 抓取失败: {remote_name}, 状态码: {r.status_code}")
         except Exception as e:
-            print(f"💥 抓取 {name} 出错: {e}")
-
-    print(f"🏁 任务结束，共抓取到 {success_count} 个节点文件。")
+            print(f"💥 错误: {e}")
 
 if __name__ == "__main__":
     main()
