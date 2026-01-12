@@ -1,45 +1,17 @@
-name: Gist Node Auto Sync
-
-on:
-  workflow_dispatch: 
-  schedule:
-    - cron: '0 */6 * * *'
-
-jobs:
-  run_sync:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: 设置 Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: 安装依赖
-        run: pip install requests
-
-      - name: 执行抓取脚本
-        run: python main.py
-
-      - name: 强制同步仓库 (防止打岔)
+      - name: 强制同步仓库
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           
-          # 1. 强制拉取远程最新代码，解决冲突
-          git pull --rebase origin main
+          # 1. 强制放弃本地所有改动，变回跟远程一模一样（解决 pull 报错）
+          git reset --hard origin/main
           
-          # 2. 关键：添加所有新文件（不管叫什么名字）
+          # 2. 重新执行一次脚本，确保生成最新的文件
+          python main.py
+          
+          # 3. 把新生成的文件全部加入
           git add .
           
-          # 3. 即使没有新文件也允许通过，不报错
-          git commit --allow-empty -m "Auto Update: $(date)"
-          
-          # 4. 强制推送
+          # 4. 提交并强制推送
+          git commit --allow-empty -m "Fixed Pull Conflict: $(date)"
           git push --force origin main
