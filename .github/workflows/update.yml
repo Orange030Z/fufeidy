@@ -24,24 +24,24 @@ jobs:
       - name: 安装依赖
         run: pip install requests
 
-      - name: 强制清理并执行
+      - name: 强制清理环境并抓取
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           
-          # 1. 彻底清除所有未提交的本地临时文件，防止打岔
-          git checkout .
-          git clean -fd
+          # 1. 强行重置本地分支，清除所有冲突残留
+          git fetch origin main
+          git reset --hard origin/main
           
-          # 2. 强制拉取最新代码
-          git pull --rebase origin main
-          
-          # 3. 现在可以安全地跑脚本生成文件了
+          # 2. 运行脚本生成节点文件
           python main.py
           
-          # 4. 把新生成的东西全部抓取
-          git add .
+          # 3. 检查是否有文件生成（用于日志排查）
+          ls -R
           
-          # 5. 强制推送覆盖
-          git commit --allow-empty -m "Master Fix: $(date)"
+          # 4. 强制添加所有新文件并提交
+          git add .
+          git commit --allow-empty -m "Master Force Update: $(date)"
+          
+          # 5. 暴力推送，覆盖远程仓库
           git push --force origin main
