@@ -14,22 +14,22 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 安装 Python
+      - name: 设置 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: 安装请求库
+      - name: 安装依赖
         run: pip install requests
 
-      - name: 强制执行脚本
+      - name: 执行抓取脚本
         run: python main.py
 
-      - name: 强制同步到仓库
+      - name: 强制同步仓库
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add *.txt
-          # 即使内容没变也强制创建一个新的 commit
-          git commit --allow-empty -m "Force Sync: $(date)"
+          # 即使内容没变也强制创建一个 commit 记录
+          git commit --allow-empty -m "Update Nodes: $(date)"
           git push origin main
