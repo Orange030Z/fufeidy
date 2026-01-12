@@ -2,14 +2,14 @@ name: Gist Node Auto Sync
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # 每 6 小时自动运行
-  workflow_dispatch:      # 允许手动触发运行
+    - cron: '0 */6 * * *'
+  workflow_dispatch: 
 
 jobs:
   run_sync:
     runs-on: ubuntu-latest
     permissions:
-      contents: write     # 确保有写入权限
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -27,18 +27,14 @@ jobs:
 
       - name: Commit and Push
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Action"
           
-          # 1. 将所有生成的 txt 文件加入暂存区
+          # 添加所有 txt 文件
           git add *.txt
           
-          # 2. 检查是否有文件发生了实质性的内容变化
-          # git diff --cached --quiet 会在没有改动时返回 0（真）
-          if git diff --cached --quiet; then
-            echo "✅ 节点内容与仓库现有内容一致，无需更新。"
-          else
-            echo "🚀 检测到节点更新，正在提交..."
-            git commit -m "Auto Update: $(date +'%Y-%m-%d %H:%M:%S')"
-            git push
-          fi
+          # 提交更改
+          git commit -m "Update nodes plain text: $(date)" || echo "No changes to commit"
+          
+          # 推送
+          git push origin main
