@@ -2,14 +2,14 @@ name: Gist Node Auto Sync
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
+    - cron: '0 */6 * * *' # 每6小时运行一次
+  workflow_dispatch:      # 允许手动运行
 
 jobs:
   run_sync:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write     # 必须开启写入权限
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,8 +20,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install Dependencies
-        # 这一步是关键：它会安装 requirements.txt 里的所有库
-        run: pip install -r requirements.txt
+        run: pip install requests
 
       - name: Execute Script
         run: python main.py
@@ -30,6 +29,12 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add *.txt
-          git commit -m "Sync nodes from Gist: $(date)" || echo "No changes"
-          git push
+          
+          # 只有当目录下有新的 .txt 文件生成时才执行提交
+          if ls *.txt 1> /dev/null 2>&1; then
+            git add *.txt
+            git commit -m "Auto Update: $(date)"
+            git push
+          else
+            echo "没有发现生成的订阅文件，跳过提交。"
+          fi
