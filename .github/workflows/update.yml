@@ -1,42 +1,14 @@
-name: Gist Node Auto Sync
-
-on:
-  workflow_dispatch: 
-  schedule:
-    - cron: '0 */6 * * *'
-
-jobs:
-  run_sync:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install Requests
-        run: pip install requests
-
-      - name: Execute Main Script
-        run: python main.py
-
-      - name: Force Push to Repository
+      - name: 强制同步仓库
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           
-          # 关键步骤：强制清理并同步
-          git add *.txt RUN_LOG.txt
+          # 1. 强力拉取，防止冲突
+          git pull --rebase origin main
           
-          # 即使没有变动也强制产生一条提交记录，防止 Actions 报错
-          git commit --allow-empty -m "Force Sync Nodes $(date)"
+          # 2. 核心修改：使用 git add . 抓取所有新生成的文件，不管它有没有后缀
+          git add .
           
-          # 强制推送到主分支，无视任何冲突
+          # 3. 提交并强制推送
+          git commit --allow-empty -m "Final Fix: $(date)"
           git push --force origin main
